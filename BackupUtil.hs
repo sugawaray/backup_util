@@ -269,7 +269,9 @@ findBackupFile path root =
                                (map
                                findChild
                                (children backupDirectory)) in
-            head matchResults
+              case matchResults of
+                (x:_) -> x
+                [] -> Nothing
         BackupFile (Left _) -> Nothing
     _ -> Nothing
 

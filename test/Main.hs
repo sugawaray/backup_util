@@ -86,6 +86,38 @@ testGivenBackupDirectoryHasChildWhenThePathMatchesThenReturnTheChild =
                             (nameOfBackupFile result')
             _ -> assertFailure "should not happen"
 
+testGivenDirectoryHasChildWhenPathToParentMatchesThenReturnNothing::Assertion
+testGivenDirectoryHasChildWhenPathToParentMatchesThenReturnNothing =
+  do
+    let child1 = (BackupFile (Left
+                     (RegularBackupFile
+                      Nothing
+                      ["theParent", "theChild1"]
+                      (Just 0)
+                      (BackupInfo True)
+                     )))
+    let child2 = (BackupFile (Left
+                     (RegularBackupFile
+                     Nothing
+                     ["theParent", "theChild2"]
+                     (Just 0)
+                     (BackupInfo True)
+                     ))) in
+      let tree = (BackupFile (Right
+                   (BackupDirectory
+                    Nothing
+                    ["theParent"]
+                    [child1
+                    ,child2]
+                    (BackupInfo True)
+                   ))) in
+        let result = findBackupFile
+                     ["theParent", "theChild3"]
+                     tree in
+          case result of
+            Just result' -> assertFailure "should not happen"
+            _ -> return ()
+
 testGivenRegularBackupFileWhenPathToCurrentNodeMatchesButNotForTheRestThenReturnNothing ::
   Assertion
 testGivenRegularBackupFileWhenPathToCurrentNodeMatchesButNotForTheRestThenReturnNothing =
@@ -354,6 +386,9 @@ main = defaultMainWithOpts
        , testCase
          "testGivenBackupDirectoryHasChildWhenThePathMatchesThenReturnTheChild"
          testGivenBackupDirectoryHasChildWhenThePathMatchesThenReturnTheChild
+       , testCase
+         "testGivenDirectoryHasChildWhenPathToParentMatchesThenReturnNothing"
+         testGivenDirectoryHasChildWhenPathToParentMatchesThenReturnNothing
        , testCase
          "testGivenRegularBackupFileWhenPathToCurrentNodeMatchesButNotForTheRestThenReturnNothing"
          testGivenRegularBackupFileWhenPathToCurrentNodeMatchesButNotForTheRestThenReturnNothing
