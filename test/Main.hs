@@ -362,14 +362,40 @@ testWalkBackupFilesGivenFilesNotToBackupWhenWalkThenSkipThose =
                                       [".", "dir1", "file1"]
                                       (Just 1)
                                       (BackupInfo True)))]
-                               (BackupInfo False)))]
-                      (BackupInfo True)))
+                              (BackupInfo False)))]
+                     (BackupInfo True)))
       expect = [["."]]
   in
     let result = walkBackupFiles True (\a -> Just (pathOfBackupFile a)) tree
     in
       do
         assertEqual "skip" expect result
+        return ()
+
+testGivenFilesNotToBackupWhenWalkWithoutSkipThenDoNotSkipThose::Assertion
+testGivenFilesNotToBackupWhenWalkWithoutSkipThenDoNotSkipThose =   
+  let tree = BackupFile
+             (Right (BackupDirectory
+                     Nothing
+                     ["."]
+                     [BackupFile
+                      (Right (BackupDirectory
+                              Nothing
+                              [".", "dir1"]
+                              [BackupFile
+                               (Left (RegularBackupFile
+                                      Nothing
+                                      [".", "dir1", "file1"]
+                                      (Just 1)
+                                      (BackupInfo True)))]
+                              (BackupInfo False)))]
+                      (BackupInfo True)))
+      expect = reverse [["."], [".", "dir1"], [".", "dir1", "file1"]]
+  in
+    let result = walkBackupFiles False (\a -> Just (pathOfBackupFile a)) tree
+    in
+      do
+        assertEqual "do not skip" expect result
         return ()
         
 main :: IO ()
@@ -422,5 +448,8 @@ main = defaultMainWithOpts
        , testCase
          "testWalkBackupFilesGivenFilesNotToBackupWhenWalkThenSkipThose"
          testWalkBackupFilesGivenFilesNotToBackupWhenWalkThenSkipThose
+       , testCase
+         "testGivenFilesNotToBackupWhenWalkWithoutSkipThenDoNotSkipThose"
+         testGivenFilesNotToBackupWhenWalkWithoutSkipThenDoNotSkipThose
        ]
        mempty

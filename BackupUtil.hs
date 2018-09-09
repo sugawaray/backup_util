@@ -328,8 +328,8 @@ walkBackupFiles skip callback file =
         case files of
           (x:xs) -> (walkBackupFiles skip callback x) ++ (walk xs)
           [] -> []
-      call file' | toBackup file = callback file'
-                 | otherwise = Nothing
+      call file' | not (toBackup file) && skip = Nothing
+                 | otherwise = callback file'
       returnCallResult =
         case file of
           BackupFile (Left _) -> toList (call file)
