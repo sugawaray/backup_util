@@ -322,22 +322,39 @@ backupFilePath file =
     BackupInfo flag | flag -> Just $ pathString file
                     | otherwise -> Nothing
 
-walkBackupFiles :: Bool -> (BackupFile -> Maybe a) -> BackupFile -> [a]
+data TraverseStyle = DoNotSkip
+                   | Skip
+                   | SkipChildren
+
+walkBackupFiles :: TraverseStyle -> (BackupFile -> Maybe a) -> BackupFile -> [a]
 walkBackupFiles skip callback file =
-  let walk files =
+  let skipOrSkipChildren v =
+        case v of
+          Skip -> True
+          SkipChildren -> True
+          _ -> False
+      walk files =
         case files of
           (x:xs) -> (walkBackupFiles skip callback x) ++ (walk xs)
           [] -> []
-      call file' | not (toBackup file) && skip = Nothing
+      doSkipCurrent v =
+        case v of
+          DoNotSkip -> False
+          SkipChildren -> False
+          _ -> True
+      call file' | not (toBackup file) && doSkipCurrent skip = Nothing
                  | otherwise = callback file'
       returnCallResult =
         case file of
           BackupFile (Left _) -> toList (call file)
           BackupFile (Right directory)
-            ->  let heads = walk $ children directory
-                in heads ++ catMaybes [(call file)]
+            | not (toBackup file) && skipOrSkipChildren skip
+              -> catMaybes [(call file)]
+            | otherwise
+              -> let heads = walk $ children directory
+                 in heads ++ catMaybes [(call file)]
   in
-    if not (toBackup file) && skip then [] else returnCallResult
+    if not (toBackup file) && doSkipCurrent skip then [] else returnCallResult
 
 setBackupFlagByList :: BackupFile -> [([FilePath], Bool)] -> BackupFile
 setBackupFlagByList file flagSeq =
